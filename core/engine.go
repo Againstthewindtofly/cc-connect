@@ -5972,10 +5972,10 @@ func (e *Engine) sendScreenshotImage(p Platform, msg *Message, imgData []byte, t
 	savePath := filepath.Join(os.TempDir(), fmt.Sprintf("cc-connect-screenshot-%d.png", time.Now().UnixNano()))
 	if err := os.WriteFile(savePath, imgData, 0o644); err != nil {
 		slog.Error("screenshot: save failed", "path", savePath, "error", err)
-		e.reply(p, msg.ReplyCtx, e.i18n.Tf(MsgScreenshotFailed, "cannot save file"))
+		e.reply(p, msg.ReplyCtx, e.i18n.Tf(MsgScreenshotFailed, e.i18n.T(MsgScreenshotCannotSaveFile)))
 		return
 	}
-	e.reply(p, msg.ReplyCtx, e.i18n.Tf(MsgScreenshotSentFailed, "platform does not support image sending", savePath))
+	e.reply(p, msg.ReplyCtx, e.i18n.Tf(MsgScreenshotSentFailed, e.i18n.T(MsgScreenshotPlatformUnsupported), savePath))
 }
 // matchPrefix finds a unique command matching the given prefix.
 // Returns the command id or "" if no match / ambiguous.
@@ -8902,6 +8902,7 @@ func helpCardGroups() []helpCardGroup {
 			items: []helpCardItem{
 				{command: "/shell", action: "cmd:/shell"},
 				{command: "/show", action: "cmd:/show"},
+				{command: "/screenshot", action: "cmd:/screenshot"},
 				{command: "/cron", action: "nav:/cron"},
 				{command: "/timer", action: "nav:/timer"},
 				{command: "/heartbeat", action: "nav:/heartbeat"},
