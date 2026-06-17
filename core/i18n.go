@@ -646,6 +646,14 @@ const (
 	MsgWsInitInvalidTarget      MsgKey = "ws_init_invalid_target"
 	MsgWsInitLocalPathsDisabled MsgKey = "ws_init_local_paths_disabled"
 	MsgBackgroundAutoDenied     MsgKey = "background_auto_denied"
+
+	// Screenshot messages
+	MsgScreenshotSuccess       MsgKey = "screenshot_success"
+	MsgScreenshotFailed        MsgKey = "screenshot_failed"
+	MsgScreenshotNoDisplay     MsgKey = "screenshot_no_display"
+	MsgScreenshotNoTool        MsgKey = "screenshot_no_tool"
+	MsgScreenshotCapturing     MsgKey = "screenshot_capturing"
+	MsgScreenshotSentFailed    MsgKey = "screenshot_sent_failed"
 )
 
 var messages = map[MsgKey]map[Language]string{
@@ -806,6 +814,48 @@ var messages = map[MsgKey]map[Language]string{
 		LangTraditionalChinese: "⚠️ 後台任務請求使用工具 `%s` 的權限，但已自動拒絕（目前無活躍會話）。請發送訊息或使用 `/yolo` 授權後續請求。",
 		LangJapanese:           "⚠️ バックグラウンドタスクがツール `%s` の権限を要求しましたが、自動的に拒否されました（アクティブなユーザーターンなし）。メッセージを送信するか `/yolo` を使用して今後のリクエストを承認してください。",
 		LangSpanish:            "⚠️ Una tarea en segundo plano solicitó permiso para `%s` pero se denegó automáticamente (sin turno de usuario activo). Envía un mensaje o usa `/yolo` para aprobar solicitudes futuras.",
+	},
+	MsgScreenshotCapturing: {
+		LangEnglish:            "📸 Capturing screenshot...",
+		LangChinese:            "📸 正在截屏...",
+		LangTraditionalChinese: "📸 正在截圖...",
+		LangJapanese:           "📸 スクリーンショットを撮影中...",
+		LangSpanish:            "📸 Capturando pantalla...",
+	},
+	MsgScreenshotSuccess: {
+		LangEnglish:            "📸 Screenshot captured.",
+		LangChinese:            "📸 截屏成功。",
+		LangTraditionalChinese: "📸 截圖成功。",
+		LangJapanese:           "📸 スクリーンショットを撮影しました。",
+		LangSpanish:            "📸 Captura de pantalla exitosa.",
+	},
+	MsgScreenshotFailed: {
+		LangEnglish:            "❌ Screenshot failed: %s",
+		LangChinese:            "❌ 截屏失败：%s",
+		LangTraditionalChinese: "❌ 截圖失敗：%s",
+		LangJapanese:           "❌ スクリーンショットに失敗しました：%s",
+		LangSpanish:            "❌ Error al capturar pantalla：%s",
+	},
+	MsgScreenshotNoDisplay: {
+		LangEnglish:            "❌ No display available (DISPLAY environment variable not set).",
+		LangChinese:            "❌ 无可用显示器（DISPLAY 环境变量未设置）。",
+		LangTraditionalChinese: "❌ 無可用顯示器（DISPLAY 環境變量未設置）。",
+		LangJapanese:           "❌ ディスプレイが利用できません（DISPLAY 環境変数が設定されていません）。",
+		LangSpanish:            "❌ No hay pantalla disponible (variable de entorno DISPLAY no configurada).",
+	},
+	MsgScreenshotNoTool: {
+		LangEnglish:            "❌ No screenshot tool found. Install one of: scrot, gnome-screenshot, import (ImageMagick).",
+		LangChinese:            "❌ 未找到截屏工具。请安装以下之一：scrot、gnome-screenshot、import (ImageMagick)。",
+		LangTraditionalChinese: "❌ 未找到截圖工具。請安裝以下之一：scrot、gnome-screenshot、import (ImageMagick)。",
+		LangJapanese:           "❌ スクリーンショットツールが見つかりません。scrot、gnome-screenshot、import (ImageMagick) のいずれかをインストールしてください。",
+		LangSpanish:            "❌ No se encontró herramienta de captura. Instale una de: scrot, gnome-screenshot, import (ImageMagick).",
+	},
+	MsgScreenshotSentFailed: {
+		LangEnglish:            "⚠️ Screenshot captured but failed to send as image: %s\nSaved to: %s",
+		LangChinese:            "⚠️ 截屏成功但无法发送图片：%s\n已保存至：%s",
+		LangTraditionalChinese: "⚠️ 截圖成功但無法發送圖片：%s\n已保存至：%s",
+		LangJapanese:           "⚠️ スクリーンショットを撮影しましたが、画像の送信に失敗しました：%s\n保存先：%s",
+		LangSpanish:            "⚠️ Captura exitosa pero falló el envío como imagen：%s\nGuardado en：%s",
 	},
 	MsgSessionNotFound: {
 		LangEnglish:            "⚠️ Session expired. Use /new to start a fresh conversation.",

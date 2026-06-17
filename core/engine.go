@@ -1009,6 +1009,7 @@ var privilegedCommands = map[string]bool{
 	"upgrade": true,
 	"web":     true,
 	"diff":    true,
+	"screenshot": true,
 }
 
 // isAdmin checks whether the given user ID is authorized for privileged commands.
@@ -5787,6 +5788,7 @@ var builtinCommands = []struct {
 	{[]string{"web"}, "web"},
 	{[]string{"diff"}, "diff"},
 	{[]string{"ps", "btw"}, "ps"},
+	{[]string{"screenshot", "shot", "screen", "capture"}, "screenshot"},
 }
 
 func (e *Engine) cmdPs(p Platform, msg *Message, args []string) {
@@ -5818,6 +5820,133 @@ func (e *Engine) cmdPs(p Platform, msg *Message, args []string) {
 		return
 	}
 	e.reply(p, msg.ReplyCtx, e.i18n.T(MsgPsSent))
+}
+
+// cmdScreenshot captures the current screen and sends the image to the user.
+func (e *Engine) cmdScreenshot(p Platform, msg *Message, args []string) {
+	// Check DISPLAY environment variable
+	if os.Getenv("DISPLAY") == "" && os.Getenv("WAYLAND_DISPLAY") == "" {
+		e.reply(p, msg.ReplyCtx, e.i18n.T(MsgScreenshotNoDisplay))
+		return
+	}
+
+	// Find an available screenshot tool
+	screenshotTools := []struct {
+		name string
+		args []string
+	}{
+		{"scrot", []string{"-o", "/tmp/cc-connect-screenshot.png"}},
+		{"gnome-screenshot", []string{"-f", "/tmp/cc-connect-screenshot.png"}},
+		{"import", []string{"-window", "root", "/tmp/cc-connect-screenshot.png"}},
+		{"xwd", []string{"-root", "-out", "/tmp/cc-connect-screenshot.xwd"}},
+	}
+
+	var toolName string
+	var toolArgs []string
+	for _, tool := range screenshotTools {
+		if _, err := exec.LookPath(tool.name); err == nil {
+			toolName = tool.name
+			toolArgs = tool.args
+			break
+		}
+	}
+
+	if toolName == "" {
+		e.reply(p, msg.ReplyCtx, e.i18n.T(MsgScreenshotNoTool))
+		return
+	}
+
+	e.reply(p, msg.ReplyCtx, e.i18n.T(MsgScreenshotCapturing))
+
+	go func() {
+		ctx, cancel := context.WithTimeout(e.ctx, 15*time.Second)
+		defer cancel()
+
+		// Generate unique filename to avoid collisions
+		tmpFile := fmt.Sprintf("/tmp/cc-connect-screenshot-%d.png", time.Now().UnixNano())
+
+		// Replace placeholder path in args with actual temp file
+		actualArgs := make([]string, len(toolArgs))
+		for i, a := range toolArgs {
+			if a == "/tmp/cc-connect-screenshot.png" || a == "/tmp/cc-connect-screenshot.xwd" {
+				actualArgs[i] = tmpFile
+			} else {
+				actualArgs[i] = a
+			}
+		}
+
+		cmd := exec.CommandContext(ctx, toolName, actualArgs...)
+		if out, err := cmd.CombinedOutput(); err != nil {
+			slog.Error("screenshot: capture failed", "tool", toolName, "error", err, "output", string(out))
+			e.reply(p, msg.ReplyCtx, e.i18n.Tf(MsgScreenshotFailed, err.Error()))
+			return
+		}
+
+		// Read the captured image
+		imgData, err := os.ReadFile(tmpFile)
+		if err != nil {
+			slog.Error("screenshot: read failed", "path", tmpFile, "error", err)
+			e.reply(p, msg.ReplyCtx, e.i18n.Tf(MsgScreenshotFailed, err.Error()))
+			return
+		}
+
+		// Clean up temp file
+		os.Remove(tmpFile)
+
+		// Try to send as image if platform supports it
+		if imageSender, ok := p.(ImageSender); ok && e.attachmentSendEnabled {
+			img := ImageAttachment{
+				MimeType: "image/png",
+				Data:     imgData,
+				FileName: "screenshot.png",
+			}
+			if err := imageSender.SendImage(e.ctx, msg.ReplyCtx, img); err != nil {
+				slog.Error("screenshot: send image failed", "error", err)
+				// Fallback: try FileSender
+				if fileSender, ok2 := p.(FileSender); ok2 {
+					file := FileAttachment{
+						MimeType: "image/png",
+						Data:     imgData,
+						FileName: "screenshot.png",
+					}
+					if ferr := fileSender.SendFile(e.ctx, msg.ReplyCtx, file); ferr != nil {
+						slog.Error("screenshot: send file fallback failed", "error", ferr)
+						e.reply(p, msg.ReplyCtx, e.i18n.Tf(MsgScreenshotSentFailed, err.Error(), tmpFile))
+					} else {
+						e.reply(p, msg.ReplyCtx, e.i18n.T(MsgScreenshotSuccess))
+					}
+				} else {
+					e.reply(p, msg.ReplyCtx, e.i18n.Tf(MsgScreenshotSentFailed, err.Error(), tmpFile))
+				}
+			}
+			return
+		}
+
+		// Fallback: try FileSender
+		if fileSender, ok := p.(FileSender); ok && e.attachmentSendEnabled {
+			file := FileAttachment{
+				MimeType: "image/png",
+				Data:     imgData,
+				FileName: "screenshot.png",
+			}
+			if err := fileSender.SendFile(e.ctx, msg.ReplyCtx, file); err != nil {
+				slog.Error("screenshot: send file failed", "error", err)
+				e.reply(p, msg.ReplyCtx, e.i18n.Tf(MsgScreenshotSentFailed, err.Error(), tmpFile))
+			} else {
+				e.reply(p, msg.ReplyCtx, e.i18n.T(MsgScreenshotSuccess))
+			}
+			return
+		}
+
+		// No image/file sending support: save and tell user where the file is
+		savePath := fmt.Sprintf("/tmp/cc-connect-screenshot-%d.png", time.Now().UnixNano())
+		if err := os.WriteFile(savePath, imgData, 0o644); err != nil {
+			slog.Error("screenshot: save failed", "path", savePath, "error", err)
+			e.reply(p, msg.ReplyCtx, e.i18n.Tf(MsgScreenshotFailed, "cannot save file"))
+			return
+		}
+		e.reply(p, msg.ReplyCtx, e.i18n.Tf(MsgScreenshotSentFailed, "platform does not support image sending", savePath))
+	}()
 }
 
 // matchPrefix finds a unique command matching the given prefix.
@@ -6036,6 +6165,8 @@ func (e *Engine) handleCommand(p Platform, msg *Message, raw string) bool {
 		e.cmdWeb(p, msg, args)
 	case "ps":
 		e.cmdPs(p, msg, args)
+	case "screenshot":
+		e.cmdScreenshot(p, msg, args)
 	default:
 		if custom, ok := e.commands.Resolve(cmd); ok {
 			if disabledCmds[strings.ToLower(custom.Name)] {
