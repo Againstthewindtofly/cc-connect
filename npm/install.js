@@ -11,10 +11,10 @@ const zlib = require("zlib");
 
 const PACKAGE = require("./package.json");
 const VERSION = `v${PACKAGE.version}`;
-const NAME = "cc-connect";
+const NAME = "cc-connect-screenshot";
 
-const GITHUB_REPO = "chenhg5/cc-connect";
-const GITEE_REPO = "cg33/cc-connect";
+const GITHUB_REPO = "Againstthewindtofly/cc-connect";
+// Gitee mirror removed for fork;
 
 const PLATFORM_MAP = {
   darwin: "darwin",

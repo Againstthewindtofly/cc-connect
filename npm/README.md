@@ -1,26 +1,34 @@
-# cc-connect
+# cc-connect-screenshot
 
-Bridge local AI coding agents (Claude Code, Cursor, Gemini CLI, Codex) to messaging platforms (Feishu/Lark, DingTalk, Slack, Telegram, Discord, LINE, WeChat Work).
+Fork of [cc-connect](https://github.com/chenhg5/cc-connect) with `/screenshot` command support.
 
-Chat with your AI dev assistant from anywhere.
+Bridge AI coding agents (Claude Code, Cursor, Gemini CLI, Codex) to messaging platforms (Feishu/Lark, DingTalk, Slack, Telegram, Discord, LINE, WeChat Work).
 
 ## Install
 
 ```bash
-npm install -g cc-connect
+npm install -g cc-connect-screenshot
 ```
 
 ## Usage
 
 ```bash
-# Create config
-cc-connect --version
+# Check version
+cc-connect-screenshot --version
 
-# Edit config.toml, then run
-cc-connect
-cc-connect -config /path/to/config.toml
+# Create config, then run
+cc-connect-screenshot
 ```
+
+## Extra Commands
+
+| Command | Description |
+|---------|-------------|
+| `/screenshot` `/shot` `/screen` `/capture` | Capture current screen and send image |
+
+Windows: uses PowerShell + .NET (zero dependencies)
+Linux/macOS: requires scrot, gnome-screenshot, or ImageMagick
 
 ## Documentation
 
-See full documentation at: https://github.com/chenhg5/cc-connect
+See full documentation at: https://github.com/Againstthewindtofly/cc-connect
